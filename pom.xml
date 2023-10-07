@@ -10,6 +10,8 @@
     <name>spring-clolud-alibaba-demo</name>
     <modules>
         <module>user-service</module>
+        <module>discovery</module>
+        <module>common</module>
     </modules>
 
     <!--SpringBoot，帮子项目管理依赖的版本号-->

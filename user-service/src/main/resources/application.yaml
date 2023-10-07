@@ -4,6 +4,8 @@ server:
     context-path: /userService/
 
 spring:
+  application:
+    name: userService
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql:///springboot-app?useUnicode=true&characterEncoding=utf-8

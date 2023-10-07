@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration debug="false" scan="true" scanPeriod="1 seconds">
+
+    <contextName>logback</contextName>
+    <!--必须修改：改成你的日志文件名，下面配置表示：在项目启动目录下，创建个logs文件夹，并将日志写入到demo.log文件中-->
+    <property name="log.name" value="discovery"/>
+
+    <!--输出到控制台 ConsoleAppender-->
+    <appender name="console" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>
+                [%level] %date{yyyy-MM-dd HH:mm:ss.SSS}|T:%thread|%logger{96}:[%line] - %msg%n
+            </pattern>
+        </encoder>
+    </appender>
+
+    <!--必须要配置：下面配置含义，当单个日志文件大小超过100M后，会生成新日志文件，并将旧其按日志进行打包压缩，当日志总大小超过10G或者日志时间超过7天，就吧最老的日志删除，避免日志撑爆服务器硬盘导致服务器宕机-->
+    <appender name="file" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>logs/${log.name}.log</file>
+        <!--滚动策略，按照时间滚动 TimeBasedRollingPolicy-->
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <!--文件路径,定义了日志的切分方式——把每一天的日志归档到一个文件中,以防止日志填满整个磁盘空间-->
+            <FileNamePattern>logs/${log.name}.%d{yyyy-MM-dd}.%i.log</FileNamePattern>
+            <!-- 单个日志文件最多 100MB -->
+            <maxFileSize>100MB</maxFileSize>
+            <!--只保留最近7天的日志-->
+            <maxHistory>30</maxHistory>
+            <!--用来指定日志文件的上限大小，那么到了这个值，就会删除旧的日志-->
+            <totalSizeCap>10GB</totalSizeCap>
+        </rollingPolicy>
+        <!--日志输出编码格式化-->
+        <encoder>
+            <charset>UTF-8</charset>
+            <pattern>%d [%t] %-5level %logger{36}.%M\(%file:%line\) - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <root level="info">
+        <appender-ref ref="console"/>
+        <appender-ref ref="file"/>
+    </root>
+
+
+</configuration>
