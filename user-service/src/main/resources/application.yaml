@@ -1,0 +1,13 @@
+server:
+  port: 8080
+  servlet:
+    context-path: /userService/
+
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql:///springboot-app?useUnicode=true&characterEncoding=utf-8
+    password: root
+    username: root
+#  mybatis:
+#    type-aliases-package: cn.zwj.domain
