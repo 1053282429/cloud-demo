@@ -14,7 +14,7 @@ public class Register {
      */
     private String name;
     /**
-     * 分组
+     * 业务分组
      */
     private String group;
     /**

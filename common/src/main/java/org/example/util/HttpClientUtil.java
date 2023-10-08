@@ -19,6 +19,7 @@ import org.apache.http.ssl.SSLContexts;
 import org.apache.http.util.EntityUtils;
 
 import javax.net.ssl.SSLContext;
+import javax.servlet.http.HttpServletRequest;
 import java.io.File;
 import java.io.FileInputStream;
 import java.nio.charset.StandardCharsets;
@@ -268,6 +269,10 @@ public class HttpClientUtil {
      * @throws Exception
      */
     private static String doHttp(HttpRequestBase request) throws Exception {
+        HttpServletRequest httpRequest = HttpContextUtils.getHttpServletRequest();
+        String traceId = httpRequest.getHeader("trace-id");
+        request.setHeader("trace-id", traceId);
+
         // 通过连接池获取连接对象
         return doRequest(httpClient, request);
     }

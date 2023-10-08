@@ -27,7 +27,7 @@ public class Server implements Serializable {
     private String name;
 
     /**
-     * 分组
+     * 业务分组
      */
     private String group;
 

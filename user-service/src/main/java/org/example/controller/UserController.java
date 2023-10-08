@@ -9,7 +9,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.HashMap;
 
 /**
  * @Author: 边俊超
@@ -27,9 +26,7 @@ public class UserController {
         String traceId = request.getHeader("trace-id");
         String url = "http://192.168.1.4:8081/discovery/discovery/get";
         try {
-            HashMap<String, Object> headerMap = new HashMap<>();
-            headerMap.put("trace-id", traceId);
-            String s = HttpClientUtil.doGet(url, headerMap);
+            String s = HttpClientUtil.doGet(url);
             logger.info(s);
 
         } catch (Exception e) {

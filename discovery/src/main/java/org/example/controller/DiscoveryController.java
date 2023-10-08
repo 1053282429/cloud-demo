@@ -1,5 +1,6 @@
 package org.example.controller;
 
+import org.example.po.Keepalive;
 import org.example.po.Register;
 import org.example.service.DiscoveryService;
 import org.example.util.HttpContextUtils;
@@ -31,8 +32,13 @@ public class DiscoveryController {
     }
 
     @PostMapping("/register")
-    public void register(@RequestBody Register register){
-        discoveryService.register(register);
+    public String register(@RequestBody Register register){
+        return discoveryService.register(register);
+    }
+
+    @PostMapping("/keepalive")
+    public void keepalive(@RequestBody Keepalive keepalive){
+        discoveryService.keepalive(keepalive);
     }
 
 }

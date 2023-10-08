@@ -1,5 +1,6 @@
 package org.example.service;
 
+import org.example.po.Keepalive;
 import org.example.po.Register;
 
 /**
@@ -12,5 +13,11 @@ public interface DiscoveryService {
      * 实例注册
      * @param register
      */
-    void register(Register register);
+    String register(Register register);
+
+    /**
+     * 心跳
+     * @param keepalive
+     */
+    void keepalive(Keepalive keepalive);
 }
