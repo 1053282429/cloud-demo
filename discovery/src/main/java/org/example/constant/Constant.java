@@ -6,5 +6,5 @@ package org.example.constant;
  */
 public class Constant {
 
-    public static final String REDIS_DISCOVERY_SERVER_LIST_KEY = "discovery.server.list";
+    public static final String REDIS_DISCOVERY_SERVER_LIST_KEY_PREFIX = "discovery.server.list_";
 }

@@ -29,7 +29,7 @@ public class DiscoveryServiceImpl implements DiscoveryService {
     public void register(Register register) {
 
         String name = register.getName();
-        Object result = redisService.getCacheMapValue(Constant.REDIS_DISCOVERY_SERVER_LIST_KEY, name);
+        Object result = redisService.getCacheMapValue(Constant.REDIS_DISCOVERY_SERVER_LIST_KEY_PREFIX, name);
         Server newServer = new Server();
 
         // 如果redis中不存在该服务，则新建
@@ -68,7 +68,7 @@ public class DiscoveryServiceImpl implements DiscoveryService {
             instances.add(instance);
         }
         newServer.setInstances(instances);
-        redisService.setCacheMapValue(Constant.REDIS_DISCOVERY_SERVER_LIST_KEY, name, JSON.toJSONString(newServer));
+        redisService.setCacheMapValue(Constant.REDIS_DISCOVERY_SERVER_LIST_KEY_PREFIX, name, JSON.toJSONString(newServer));
 
     }
 }
