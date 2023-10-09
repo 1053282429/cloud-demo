@@ -1,11 +1,14 @@
 package org.example.po;
 
+import lombok.Data;
+
 import java.util.List;
 
 /**
  * @Author: 边俊超
  * @Date: 2023/10/8 15:29
  */
+@Data
 public class Subscribe {
 
     /**
@@ -21,12 +24,26 @@ public class Subscribe {
     /**
      * 订阅的服务名
      */
-    private List<String> subServerName;
+    private List<Server> server;
 
-    /**
-     * 只订阅健康实例
-     */
-    private Integer subHealthy;
+
+    static class Server {
+        /**
+         * 业务分组
+         */
+        private String group;
+
+        /**
+         * 服务名
+         */
+        private String name;
+
+        /**
+         * 只订阅健康实例
+         */
+        private Integer subHealthy;
+
+    }
 
 
 }

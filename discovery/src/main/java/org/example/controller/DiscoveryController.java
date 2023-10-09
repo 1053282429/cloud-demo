@@ -2,6 +2,8 @@ package org.example.controller;
 
 import org.example.po.Keepalive;
 import org.example.po.Register;
+import org.example.po.Result;
+import org.example.po.Subscribe;
 import org.example.service.DiscoveryService;
 import org.example.util.HttpContextUtils;
 import org.slf4j.Logger;
@@ -32,13 +34,25 @@ public class DiscoveryController {
     }
 
     @PostMapping("/register")
-    public String register(@RequestBody Register register){
-        return discoveryService.register(register);
+    public Result<String> register(@RequestBody Register register){
+        return Result.success(discoveryService.register(register));
     }
 
     @PostMapping("/keepalive")
-    public void keepalive(@RequestBody Keepalive keepalive){
+    public Result<Object> keepalive(@RequestBody Keepalive keepalive){
         discoveryService.keepalive(keepalive);
+        return Result.success();
+    }
+
+    @PostMapping("/cancel")
+    public Result<Object> cancel(@RequestBody Keepalive keepalive){
+        discoveryService.cancel(keepalive);
+        return Result.success();
+    }
+
+    @PostMapping("/subscribe")
+    public Result<Object> subscribe(@RequestBody Subscribe subscribe){
+        return Result.success(discoveryService.subscribe(subscribe));
     }
 
 }

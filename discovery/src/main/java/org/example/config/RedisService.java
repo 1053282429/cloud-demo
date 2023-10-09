@@ -209,6 +209,26 @@ public class RedisService {
     }
 
     /**
+     * 删除Hash中key
+     *
+     * @param key   Redis键
+     * @param hKey  Hash键
+     */
+    public <T> void deleteCacheMapKey(final String key, final String hKey) {
+        redisTemplate.opsForHash().delete(key, hKey);
+    }
+
+    /**
+     * 删除Hash中key
+     *
+     * @param key   Redis键
+     * @param hKey  Hash键
+     */
+    public Boolean hasCacheMapKey(final String key, final String hKey) {
+        return redisTemplate.opsForHash().hasKey(key, hKey);
+    }
+
+    /**
      * 获取多个Hash中的数据
      *
      * @param key   Redis键
@@ -225,7 +245,7 @@ public class RedisService {
      * @param pattern 字符串前缀
      * @return 对象列表
      */
-    public Collection<String> keys(final String pattern) {
+    public Set<String> keys(final String pattern) {
         return redisTemplate.keys(pattern);
     }
 }

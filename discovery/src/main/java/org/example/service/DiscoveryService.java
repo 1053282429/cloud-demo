@@ -2,6 +2,7 @@ package org.example.service;
 
 import org.example.po.Keepalive;
 import org.example.po.Register;
+import org.example.po.Subscribe;
 
 /**
  * @Author: 边俊超
@@ -20,4 +21,17 @@ public interface DiscoveryService {
      * @param keepalive
      */
     void keepalive(Keepalive keepalive);
+
+    /**
+     * 注销
+     * @param keepalive
+     */
+    void cancel(Keepalive keepalive);
+
+    /**
+     * 订阅
+     * @param subscribe
+     * @return
+     */
+    Object subscribe(Subscribe subscribe);
 }

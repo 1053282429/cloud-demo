@@ -5,16 +5,12 @@ import com.alibaba.fastjson2.JSONObject;
 import org.apache.commons.lang3.ObjectUtils;
 import org.example.config.RedisService;
 import org.example.constant.Constant;
-import org.example.po.Instance;
-import org.example.po.Keepalive;
-import org.example.po.Register;
+import org.example.po.*;
 import org.example.service.DiscoveryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * @Author: 边俊超
@@ -34,7 +30,7 @@ public class DiscoveryServiceImpl implements DiscoveryService {
         String ip = register.getIp();
         String macAddress = register.getMacAddress();
         String suffix = Constant.UNDERLINE + name + Constant.AMPERSAND + ip + Constant.AMPERSAND + port + Constant.AMPERSAND + macAddress;
-        String redisKey = Constant.DISCOVERY_REDIS_KEY_SERVER_LIST_PREFIX + register.getGroup() + Constant.UNDERLINE + name;
+        String redisKey = getRedisKey(register.getGroup(), name);
         Map<String, Object> serverList = redisService.getCacheMap(redisKey);
         String token = null;
         serverList = serverList == null ? new HashMap<>() : serverList;
@@ -71,18 +67,45 @@ public class DiscoveryServiceImpl implements DiscoveryService {
 
     @Override
     public void keepalive(Keepalive keepalive) {
-
-        String redisKey = Constant.DISCOVERY_REDIS_KEY_SERVER_LIST_PREFIX + keepalive.getGroup() + Constant.UNDERLINE + keepalive.getName();
+        String redisKey = getRedisKey(keepalive.getGroup(), keepalive.getName());
         Object cacheMapValue = redisService.getCacheMapValue(redisKey, keepalive.getToken());
 
         if (ObjectUtils.isEmpty(cacheMapValue)) {
-            throw new RuntimeException();
+            throw new ServiceException(Status.SERVER_INSTANCE_IS_NOT_EXIST);
         }
 
         Instance instance = JSONObject.parseObject(cacheMapValue.toString(), Instance.class);
         instance.setStatus(0);
         instance.setHealthy(1);
         redisService.setCacheMapValue(redisKey, keepalive.getToken(), JSON.toJSONString(instance));
+    }
 
+    @Override
+    public void cancel(Keepalive keepalive) {
+        String redisKey = getRedisKey(keepalive.getGroup(), keepalive.getName());
+        if (redisService.hasCacheMapKey(redisKey, keepalive.getToken())) {
+            throw new ServiceException(Status.SERVER_INSTANCE_IS_NOT_EXIST);
+        }
+        redisService.deleteCacheMapKey(redisKey, keepalive.getToken());
+    }
+
+    @Override
+    public Object subscribe(Subscribe subscribe) {
+
+        Set<String> keys = redisService.keys(Constant.DISCOVERY_REDIS_KEY_SERVER_LIST_PREFIX);
+
+
+
+        return null;
+    }
+
+    /**
+     * 获取实例对应的redis key
+     * @param group 分组
+     * @param name  服务名
+     * @return redis key
+     */
+    private String getRedisKey(String group, String name) {
+        return Constant.DISCOVERY_REDIS_KEY_SERVER_LIST_PREFIX + group + Constant.UNDERLINE + name;
     }
 }
