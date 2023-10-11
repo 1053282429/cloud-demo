@@ -1,12 +1,12 @@
 package org.example.config;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.redis.core.BoundSetOperations;
-import org.springframework.data.redis.core.HashOperations;
-import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.core.ValueOperations;
+import org.springframework.data.redis.connection.RedisConnection;
+import org.springframework.data.redis.core.*;
 import org.springframework.stereotype.Component;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
@@ -248,5 +248,65 @@ public class RedisService {
     public Set<String> keys(final String pattern) {
         return redisTemplate.keys(pattern);
     }
+
+    /**
+     * 根据前缀匹配key
+     * @param prefix
+     * @return
+     * @throws IOException
+     */
+    public List<String> getKeysByPrefix(String prefix) throws IOException {
+        List<String> list = new ArrayList<>();
+        ScanOptions scanOptions = ScanOptions.scanOptions().match(prefix + "*").build();
+        try (Cursor<byte[]> cursor = redisTemplate.getConnectionFactory().getConnection().scan(scanOptions)) {
+            while (cursor.hasNext()) {
+                String key = new String(cursor.next());
+                list.add(key);
+            }
+        }
+
+        return list;
+    }
+
+    /**
+     * 获取多个key
+     * @param keys
+     * @return
+     */
+    public List<Map<String, String>> mgetForHash(List<String> keys) {
+
+        List<Map<String, String>> resultList = new ArrayList<>();
+        // 创建 Redis 管道
+        RedisConnection connection = redisTemplate.getConnectionFactory().getConnection();
+        connection.openPipeline();
+        for (String key : keys) {
+            connection.hGetAll(key.getBytes());
+        }
+        List<Object> responseList = connection.closePipeline();
+        for (Object response : responseList) {
+            if (response instanceof Map) {
+                LinkedHashMap linkedHashMap = (LinkedHashMap) response;
+                HashMap<String, String> hashMap = new HashMap<>();
+                linkedHashMap.forEach((k,v) -> {
+                    if (k instanceof byte[]) {
+                        String key = deserialize((byte[]) k);
+                        String value = (String)redisTemplate.getHashValueSerializer().deserialize((byte[]) v);
+                        hashMap.put(key,value);
+                    }
+                });
+                resultList.add(hashMap);
+            }
+        }
+
+        return resultList;
+    }
+
+    private String deserialize (byte[] bytes) {
+        if (bytes == null || bytes.length <= 0) {
+            return null;
+        }
+        return  new String(bytes, StandardCharsets.UTF_8);
+    }
+
 }
 

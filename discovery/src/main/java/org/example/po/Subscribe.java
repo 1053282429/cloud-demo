@@ -22,12 +22,18 @@ public class Subscribe {
     private Integer subAll;
 
     /**
+     * 只订阅健康实例  针对subAll=1
+     */
+    private Integer subHealthy;
+
+    /**
      * 订阅的服务名
      */
     private List<Server> server;
 
 
-    static class Server {
+    @Data
+    public static class Server {
         /**
          * 业务分组
          */

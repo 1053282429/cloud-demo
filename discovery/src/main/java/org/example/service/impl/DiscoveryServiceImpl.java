@@ -10,6 +10,7 @@ import org.example.service.DiscoveryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.util.*;
 
 /**
@@ -92,11 +93,44 @@ public class DiscoveryServiceImpl implements DiscoveryService {
     @Override
     public Object subscribe(Subscribe subscribe) {
 
-        Set<String> keys = redisService.keys(Constant.DISCOVERY_REDIS_KEY_SERVER_LIST_PREFIX);
+        List<String> keys = new ArrayList<>();
+        if (subscribe.getSubAll() == 1) {
+            try {
+                // TODO: 2023/10/11 考虑本地缓存  group servername 用以直接拼接redis key 不用去扫描redis
+                // TODO: 2023/10/11 考虑discovery多实例上线时同步缓存结果
+                // TODO: 2023/10/11 考虑本地缓存所有实例列表减少网络io，实例上下线更新缓存   考虑多实例discovery的实例上下线问题
+                // TODO: 2023/10/11 考虑完全去掉redis  全部本地缓存实现  discovery多实例之间通过一致性协议同步数据
+                // TODO: 2023/10/11 考虑一致性协议实现方案   通信协议选择 http?rpc?tcp?
+                keys = redisService.getKeysByPrefix(Constant.DISCOVERY_REDIS_KEY_SERVER_LIST_PREFIX);
+            } catch (IOException e) {
+                throw new ServiceException(Status.INTERNAL_SERVER_ERROR_ARGS);
+            }
+        } else {
+            for (Subscribe.Server server : subscribe.getServer()) {
+                keys.add(getRedisKey(server.getGroup(), server.getName()));
+            }
+        }
+
+        List<Map<String, String>> maps = redisService.mgetForHash(keys);
+        List<Server> servers = new ArrayList<>();
+// TODO: 2023/10/11 reids 序列化问题 
+        maps.forEach(map -> {
+            Server server = new Server();
+            servers.add(server);
+            List<Instance> instances = new ArrayList<>();
+            server.setInstances(instances);
+            map.forEach((key, value) -> {
+                String replace = key.replace(Constant.DISCOVERY_REDIS_KEY_SERVER_LIST_PREFIX, "");
+                String[] split = replace.split(Constant.UNDERLINE);
+                server.setGroup(split[0]);
+                server.setName(split[1]);
+                Instance instance = JSONObject.parseObject(value, Instance.class);
+                instances.add(instance);
+            });
+        });
 
 
-
-        return null;
+        return servers;
     }
 
     /**
