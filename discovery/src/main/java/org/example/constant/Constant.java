@@ -6,7 +6,7 @@ package org.example.constant;
  */
 public class Constant {
 
-    public static final String DISCOVERY_REDIS_KEY_SERVER_LIST_PREFIX = "discovery.server.list_";
+    public static final String DISCOVERY_REDIS_KEY_SERVER_LIST_PREFIX = "discovery.server.list:";
 
     public static final String DEFAULT_GROUP = "public";
 
@@ -14,7 +14,9 @@ public class Constant {
 
     public static final String AMPERSAND = "&";
 
-    public static final String DEFAULT_REDIS_DISCOVERY_SERVER_LIST_KEY_PREFIX = DISCOVERY_REDIS_KEY_SERVER_LIST_PREFIX + DEFAULT_GROUP + UNDERLINE;
+    public static final String COLON = ":";
+
+    public static final String DEFAULT_REDIS_DISCOVERY_SERVER_LIST_KEY_PREFIX = DISCOVERY_REDIS_KEY_SERVER_LIST_PREFIX + DEFAULT_GROUP + COLON;
 
 
 

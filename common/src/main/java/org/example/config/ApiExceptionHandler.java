@@ -24,7 +24,7 @@ public class ApiExceptionHandler {
             ServiceException serviceException = (ServiceException)e;
             return new Result<>(serviceException.getCode(), serviceException.getEnMsg());
         }
-
+        e.printStackTrace();
         return new Result<>(Status.INTERNAL_SERVER_ERROR_ARGS.getCode(), Status.INTERNAL_SERVER_ERROR_ARGS.getEnMsg());
     }
 

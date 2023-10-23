@@ -1,13 +1,17 @@
 package org.example.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONObject;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang3.ObjectUtils;
 import org.example.config.RedisService;
 import org.example.constant.Constant;
 import org.example.po.*;
 import org.example.service.DiscoveryService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -21,7 +25,11 @@ import java.util.*;
 public class DiscoveryServiceImpl implements DiscoveryService {
 
     @Autowired
+    private RedisTemplate<String, Object> redisTemplate;
+
+    @Autowired
     private RedisService redisService;
+
 
     @Override
     public String register(Register register) {
@@ -32,25 +40,26 @@ public class DiscoveryServiceImpl implements DiscoveryService {
         String macAddress = register.getMacAddress();
         String suffix = Constant.UNDERLINE + name + Constant.AMPERSAND + ip + Constant.AMPERSAND + port + Constant.AMPERSAND + macAddress;
         String redisKey = getRedisKey(register.getGroup(), name);
-        Map<String, Object> serverList = redisService.getCacheMap(redisKey);
+        Map<Object, Object> entries = redisTemplate.opsForHash().entries(redisKey);
+        Instance instance = null;
         String token = null;
-        serverList = serverList == null ? new HashMap<>() : serverList;
 
         // 如果redis中存在该实例，则更新实例健康状态
-        // 不存在该实例则新建
-        for (Map.Entry<String, Object> entry : serverList.entrySet()) {
-            if (entry.getKey().endsWith(suffix)) {
-                token = entry.getKey();
-                Instance instance = JSONObject.parseObject(entry.getValue().toString(), Instance.class);
+        for (Map.Entry<Object, Object> entry : entries.entrySet()) {
+            String key = (String) entry.getKey();
+            if (key.endsWith(suffix)) {
+                instance = BeanUtil.toBean(entry.getValue(), Instance.class);
+//                instance = (Instance) entry.getValue();
                 instance.setStatus(0);
                 instance.setMode(register.getMode());
                 instance.setHealthy(1);
-                serverList.put(entry.getKey(), JSON.toJSONString(instance));
+                token = key;
             }
         }
+        // 不存在该实例则新建
         if (token == null) {
             token = UUID.randomUUID() + suffix;
-            Instance instance = Instance.builder()
+            instance = Instance.builder()
                     .healthy(1)
                     .macAddress(register.getMacAddress())
                     .remove(register.getRemove())
@@ -60,9 +69,8 @@ public class DiscoveryServiceImpl implements DiscoveryService {
                     .port(port)
                     .name(name)
                     .build();
-            serverList.put(token, JSON.toJSONString(instance));
         }
-        redisService.setCacheMap(redisKey, serverList);
+        redisTemplate.opsForHash().put(redisKey, token, instance);
         return token;
     }
 
@@ -94,6 +102,8 @@ public class DiscoveryServiceImpl implements DiscoveryService {
     public Object subscribe(Subscribe subscribe) {
 
         List<String> keys = new ArrayList<>();
+        // <group, <servername, healthy>>
+        Map<String, Map<String, Integer>> serverHealthyMap = new HashMap<>();
         if (subscribe.getSubAll() == 1) {
             try {
                 // TODO: 2023/10/11 考虑本地缓存  group servername 用以直接拼接redis key 不用去扫描redis
@@ -108,12 +118,14 @@ public class DiscoveryServiceImpl implements DiscoveryService {
         } else {
             for (Subscribe.Server server : subscribe.getServer()) {
                 keys.add(getRedisKey(server.getGroup(), server.getName()));
+                serverHealthyMap.putIfAbsent(server.getGroup(), new HashMap<>());
+                serverHealthyMap.get(server.getGroup()).put(server.getName(), server.getSubHealthy());
             }
         }
 
         List<Map<String, String>> maps = redisService.mgetForHash(keys);
         List<Server> servers = new ArrayList<>();
-// TODO: 2023/10/11 reids 序列化问题 
+// TODO: 2023/10/11 reids 序列化问题
         maps.forEach(map -> {
             Server server = new Server();
             servers.add(server);
@@ -122,7 +134,9 @@ public class DiscoveryServiceImpl implements DiscoveryService {
             map.forEach((key, value) -> {
                 String replace = key.replace(Constant.DISCOVERY_REDIS_KEY_SERVER_LIST_PREFIX, "");
                 String[] split = replace.split(Constant.UNDERLINE);
-                server.setGroup(split[0]);
+                String group = split[0];
+                String name = split[1];
+//                server.setGroup(split[0]);
                 server.setName(split[1]);
                 Instance instance = JSONObject.parseObject(value, Instance.class);
                 instances.add(instance);
@@ -140,6 +154,11 @@ public class DiscoveryServiceImpl implements DiscoveryService {
      * @return redis key
      */
     private String getRedisKey(String group, String name) {
-        return Constant.DISCOVERY_REDIS_KEY_SERVER_LIST_PREFIX + group + Constant.UNDERLINE + name;
+        return Constant.DISCOVERY_REDIS_KEY_SERVER_LIST_PREFIX + group + Constant.COLON + name;
+    }
+
+    private <T> T typeTransfer(Object value) {
+        ObjectMapper objectMapper = new ObjectMapper();
+        return objectMapper.convertValue(value, new TypeReference<T>() {});
     }
 }

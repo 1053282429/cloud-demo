@@ -27,11 +27,6 @@ public class Server implements Serializable {
     private String name;
 
     /**
-     * 业务分组
-     */
-    private String group;
-
-    /**
      * 实例列表
      */
     private List<Instance> instances;
