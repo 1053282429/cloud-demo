@@ -1,5 +1,7 @@
 package org.example.config;
 
+import cn.hutool.core.bean.BeanUtil;
+import org.example.po.Instance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.data.redis.core.*;
@@ -285,6 +287,12 @@ public class RedisService {
         List<Object> responseList = connection.closePipeline();
         for (Object response : responseList) {
             if (response instanceof Map) {
+                ((Map<?, ?>) response).forEach((k,v) -> {
+                    String key = (String) redisTemplate.getStringSerializer().deserialize((byte[]) k);
+                    Map<String, Object> value = (Map<String, Object>)redisTemplate.getHashValueSerializer().deserialize((byte[]) v);
+                    Instance instance = BeanUtil.toBean(value, Instance.class);
+
+                });
                 LinkedHashMap linkedHashMap = (LinkedHashMap) response;
                 HashMap<String, String> hashMap = new HashMap<>();
                 linkedHashMap.forEach((k,v) -> {

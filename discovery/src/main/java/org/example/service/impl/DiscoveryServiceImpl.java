@@ -1,7 +1,6 @@
 package org.example.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
-import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONObject;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -38,9 +37,17 @@ public class DiscoveryServiceImpl implements DiscoveryService {
         Integer port = register.getPort();
         String ip = register.getIp();
         String macAddress = register.getMacAddress();
+
+
+
         String suffix = Constant.UNDERLINE + name + Constant.AMPERSAND + ip + Constant.AMPERSAND + port + Constant.AMPERSAND + macAddress;
         String redisKey = getRedisKey(register.getGroup(), name);
-        Map<Object, Object> entries = redisTemplate.opsForHash().entries(redisKey);
+        Map<Object, Object> entries = null;
+        try {
+            entries = redisTemplate.opsForHash().entries(redisKey);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         Instance instance = null;
         String token = null;
 
@@ -70,32 +77,34 @@ public class DiscoveryServiceImpl implements DiscoveryService {
                     .name(name)
                     .build();
         }
-        redisTemplate.opsForHash().put(redisKey, token, instance);
+        List<Instance> list = new ArrayList<>();
+        list.add(instance);
+        list.add(instance);
+        redisTemplate.opsForHash().put(redisKey, token, list);
         return token;
     }
 
     @Override
     public void keepalive(Keepalive keepalive) {
         String redisKey = getRedisKey(keepalive.getGroup(), keepalive.getName());
-        Object cacheMapValue = redisService.getCacheMapValue(redisKey, keepalive.getToken());
+        Object result = redisTemplate.opsForHash().get(redisKey, keepalive.getToken());
 
-        if (ObjectUtils.isEmpty(cacheMapValue)) {
+        if (ObjectUtils.isEmpty(result)) {
             throw new ServiceException(Status.SERVER_INSTANCE_IS_NOT_EXIST);
         }
-
-        Instance instance = JSONObject.parseObject(cacheMapValue.toString(), Instance.class);
+        Instance instance = BeanUtil.toBean(result, Instance.class);
         instance.setStatus(0);
         instance.setHealthy(1);
-        redisService.setCacheMapValue(redisKey, keepalive.getToken(), JSON.toJSONString(instance));
+        redisTemplate.opsForHash().put(redisKey, keepalive.getToken(), instance);
     }
 
     @Override
     public void cancel(Keepalive keepalive) {
         String redisKey = getRedisKey(keepalive.getGroup(), keepalive.getName());
-        if (redisService.hasCacheMapKey(redisKey, keepalive.getToken())) {
+        if (!redisTemplate.opsForHash().hasKey(redisKey, keepalive.getToken())) {
             throw new ServiceException(Status.SERVER_INSTANCE_IS_NOT_EXIST);
         }
-        redisService.deleteCacheMapKey(redisKey, keepalive.getToken());
+        redisTemplate.opsForHash().delete(redisKey, keepalive.getToken());
     }
 
     @Override
