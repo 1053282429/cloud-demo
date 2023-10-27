@@ -1,12 +1,14 @@
 package org.example.config;
 
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletRequestWrapper;
-import java.io.IOException;
+import java.io.*;
 import java.util.UUID;
 
 /**
@@ -14,6 +16,8 @@ import java.util.UUID;
  */
 @Component
 public class WebFilter implements Filter {
+
+    Logger logger = LoggerFactory.getLogger(WebFilter.class);
 
 
     @Override
@@ -25,6 +29,7 @@ public class WebFilter implements Filter {
             traceId = UUID.randomUUID().toString();
             httpRequest = new CustomHttpServletRequestWrapper(httpRequest, "trace-id", traceId);
         }
+        logger.info("{} trace-id:{}",httpRequest.getRequestURL(), traceId);
         chain.doFilter(httpRequest, response);
     }
 

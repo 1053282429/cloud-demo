@@ -1,6 +1,8 @@
 package org.example.runner;
 
+import com.alibaba.fastjson2.JSONObject;
 import org.example.manager.DiscoveryNodeManager;
+import org.example.po.Result;
 import org.example.service.DiscoveryNodeService;
 import org.example.util.HttpClientUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +25,9 @@ public class ExchangeNodeInfo implements ApplicationListener<ContextRefreshedEve
     @Value("${discovery.cluster.live.host}")
     private String host;
 
+    @Value("${discovery.cluster.live.master}")
+    private String master;
+
     @Autowired
     private DiscoveryNodeService discoveryNodeService;
     /**
@@ -34,15 +39,22 @@ public class ExchangeNodeInfo implements ApplicationListener<ContextRefreshedEve
 
         List<String> healthNodeList = DiscoveryNodeManager.getHealthNodeList();
         healthNodeList.remove(host);
-
+        if (!host.equals(master)) {
+            healthNodeList.add(master);
+        }
         Map<String, Integer> exchangeInfo = DiscoveryNodeManager.getExchangeInfo();
         exchangeInfo.put(host, 1);
         Map<String, Object> params = new HashMap<>(exchangeInfo);
         healthNodeList.forEach(k -> {
-            String url = "http://" + k + "/cd/discovery/node/exchange/info";
+            String url = "http://" + k + "/cd/node/exchange/info";
             try {
                 String s = HttpClientUtil.doPost(url, params);
+                Result<Map<String, Object>> result = JSONObject.parseObject(s, Result.class);
+                Map<String, Object> data = result.getData();
+                System.out.println(data);
+                System.out.println(s);
             } catch (Exception e) {
+                e.printStackTrace();
                 throw new RuntimeException(e);
             }
         });

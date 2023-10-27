@@ -34,11 +34,11 @@ public class Result<T> {
     }
 
     public static <T> Result<T> success(T data) {
-        return new Result<>(Status.SUCCESS.getCode(), Status.SUCCESS.getMsg(), data);
+        return new Result<>(Status.SUCCESS.getCode(), Status.SUCCESS.getEnMsg(), data);
     }
 
     public static <T> Result<T> success() {
-        return new Result<>(Status.SUCCESS.getCode(), Status.SUCCESS.getMsg());
+        return new Result<>(Status.SUCCESS.getCode(), Status.SUCCESS.getEnMsg());
     }
 
     @Override

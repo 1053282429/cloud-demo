@@ -1,5 +1,6 @@
 package org.example.util;
 
+import com.alibaba.fastjson2.JSONObject;
 import org.apache.http.HttpEntity;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.config.RequestConfig;
@@ -10,6 +11,7 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.client.utils.URLEncodedUtils;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
+import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
@@ -112,10 +114,12 @@ public class HttpClientUtil {
      */
     public static String doPost(String url, Map<String, Object> params) throws Exception {
         // 转换请求参数
-        List<NameValuePair> pairs = covertParamsToList(params);
+//        List<NameValuePair> pairs = covertParamsToList(params);
         HttpPost httpPost = new HttpPost(url);
         // 设置请求参数
-        httpPost.setEntity(new UrlEncodedFormEntity(pairs, StandardCharsets.UTF_8.name()));
+        StringEntity requestEntity = new StringEntity(JSONObject.toJSONString(params), ContentType.APPLICATION_JSON);
+        httpPost.setEntity(requestEntity);
+//        httpPost.setEntity(new UrlEncodedFormEntity(pairs, StandardCharsets.UTF_8.name()));
 
         return doHttp(httpPost);
     }
@@ -270,9 +274,10 @@ public class HttpClientUtil {
      */
     private static String doHttp(HttpRequestBase request) throws Exception {
         HttpServletRequest httpRequest = HttpContextUtils.getHttpServletRequest();
-        String traceId = httpRequest.getHeader("trace-id");
-        request.setHeader("trace-id", traceId);
-
+        if (httpRequest != null) {
+            String traceId = httpRequest.getHeader("trace-id");
+            request.setHeader("trace-id", traceId);
+        }
         // 通过连接池获取连接对象
         return doRequest(httpClient, request);
     }

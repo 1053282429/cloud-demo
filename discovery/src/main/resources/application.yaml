@@ -1,11 +1,12 @@
 server:
-  port: 8081
+  port: 8082
   servlet:
     context-path: /cd
 discovery:
   cluster:
     live:
-      host: 192.168.128.188:8081
+      host: 192.168.1.4:8082
+      master: 192.168.1.4:8081
 
 spring:
   application:
