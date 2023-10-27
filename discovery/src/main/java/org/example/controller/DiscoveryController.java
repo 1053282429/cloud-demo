@@ -5,13 +5,13 @@ import org.example.po.Register;
 import org.example.po.Result;
 import org.example.po.Subscribe;
 import org.example.service.DiscoveryService;
-import org.example.util.HttpContextUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.*;
-
-import javax.servlet.http.HttpServletRequest;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 /**
  * @author 10532
@@ -24,14 +24,6 @@ public class DiscoveryController {
 
     @Autowired
     private DiscoveryService discoveryService;
-
-    @GetMapping("/get")
-    public String getList() {
-        HttpServletRequest request = HttpContextUtils.getHttpServletRequest();
-        String traceId = request.getHeader("trace-id");
-        logger.info(traceId);
-        return "222222";
-    }
 
     @PostMapping("/register")
     public Result<String> register(@RequestBody Register register){
