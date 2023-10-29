@@ -1,6 +1,5 @@
 package org.example.util;
 
-import com.alibaba.fastjson2.JSONObject;
 import org.apache.http.HttpEntity;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.config.RequestConfig;
@@ -108,16 +107,16 @@ public class HttpClientUtil {
      * 发送 HTTP POST请求，带请求参数，不带请求头
      *
      * @param url    请求地址
-     * @param params 请求参数
+     * @param jsonString 请求参数
      * @return
      * @throws Exception
      */
-    public static String doPost(String url, Map<String, Object> params) throws Exception {
+    public static String doPost(String url, String jsonString) throws Exception {
         // 转换请求参数
 //        List<NameValuePair> pairs = covertParamsToList(params);
         HttpPost httpPost = new HttpPost(url);
         // 设置请求参数
-        StringEntity requestEntity = new StringEntity(JSONObject.toJSONString(params), ContentType.APPLICATION_JSON);
+        StringEntity requestEntity = new StringEntity(jsonString, ContentType.APPLICATION_JSON);
         httpPost.setEntity(requestEntity);
 //        httpPost.setEntity(new UrlEncodedFormEntity(pairs, StandardCharsets.UTF_8.name()));
 

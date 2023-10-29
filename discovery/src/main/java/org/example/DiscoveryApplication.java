@@ -9,6 +9,10 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 @SpringBootApplication
 public class DiscoveryApplication {
     public static void main(String[] args) {
-        SpringApplication.run(DiscoveryApplication.class);
+        try {
+            SpringApplication.run(DiscoveryApplication.class);
+        } catch (Exception e) {
+            System.exit(1);
+        }
     }
 }

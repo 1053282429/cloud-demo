@@ -44,6 +44,9 @@ public class DiscoveryNodeManager {
      * 接受交换信息
      */
     public static void acceptExchangeInfo(Map<String, Integer> info) {
+        if (info.isEmpty()) {
+            return;
+        }
         List<String> exceptionList = new ArrayList<>();
         info.forEach((k,v) -> {
             // 健康实例加入列表
