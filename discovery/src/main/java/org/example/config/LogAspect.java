@@ -33,7 +33,7 @@ public class LogAspect {
         for (Object arg : args) {
             params.append(arg).append(" ");
         }
-        logger.info("param:" + params.toString());
+        logger.info("param:{}", params);
     }
 
 
@@ -42,7 +42,7 @@ public class LogAspect {
      */
     @AfterReturning(pointcut="pointMethod()", returning = "returnVal")
     public void afterReturn(JoinPoint joinPoint, Object returnVal) {
-        logger.info("return:" + returnVal.toString());
+        logger.info("return:{}", returnVal);
     }
 
 }

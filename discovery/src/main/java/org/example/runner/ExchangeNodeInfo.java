@@ -4,19 +4,16 @@ import cn.hutool.core.thread.NamedThreadFactory;
 import com.alibaba.fastjson2.JSONObject;
 import org.example.manager.DiscoveryNodeManager;
 import org.example.po.Result;
-import org.example.service.DiscoveryNodeService;
 import org.example.util.HttpClientUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.stereotype.Component;
 
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.*;
 
 /**
@@ -46,71 +43,44 @@ public class ExchangeNodeInfo implements ApplicationListener<ContextRefreshedEve
             new SynchronousQueue<>(),
             new NamedThreadFactory("node_manager_communication_thread_", false));
 
-
-    @Autowired
-    private DiscoveryNodeService discoveryNodeService;
     /**
      * 节点上线时，和其他节点互相交换节点列表信息，并定时交换
      * @param event the event to respond to
      */
     @Override
     public void onApplicationEvent(ContextRefreshedEvent event) {
-        try {
-            if (host.equals(master)) {
-                return;
-            }
-            Map<String, Object> params = new HashMap<>();
-            params.put(host, 1);
-            String url = "http://" + master + "/cd/node/exchange/info";
-            String s = null;
-            try {
-                s = HttpClientUtil.doPost(url, JSONObject.toJSONString(params));
-            } catch (Exception e) {
-                logger.error("master connection failed...");
-            }
-            Result<Map<String, Integer>> result = JSONObject.parseObject(s, Result.class);
-            if (result != null) {
+        DiscoveryNodeManager.init(master, master.equals(host));
+        scheduledExecutor.scheduleWithFixedDelay(() -> {
+            Set<String> healthNodeList = DiscoveryNodeManager.getHealthNodeList();
+            healthNodeList.forEach(address -> executor.execute(() -> {
+                String s = null;
+                try {
+                    Map<String, Integer> exchangeInfo = DiscoveryNodeManager.getExchangeInfo();
+                    exchangeInfo.put(host, DiscoveryNodeManager.NODE_HEALTHY);
+                    s = HttpClientUtil.doPost(getNodeExchangeUrl(address), JSONObject.toJSONString(exchangeInfo));
+                } catch (Exception e) {
+                    DiscoveryNodeManager.nodeExchangeFail(address);
+                    logger.error("node {} connection failed...", address);
+                }
+                if (s == null) {
+                    return;
+                }
+                Result<Map<String, Integer>> result = JSONObject.parseObject(s, Result.class);
+                if (result == null) {
+                    return;
+                }
                 Map<String, Integer> data = result.getData();
+                if (data == null) {
+                    return;
+                }
                 data.remove(host);
                 DiscoveryNodeManager.acceptExchangeInfo(data);
-            }
-        } finally {
-            scheduledExecutor.schedule(new ExchangeInfo(), 30, TimeUnit.SECONDS);
-        }
+            }));
+        },0,30,TimeUnit.SECONDS);
     }
 
-    class ExchangeInfo implements Runnable {
-        @Override
-        public void run() {
-
-            List<String> healthNodeList = DiscoveryNodeManager.getHealthNodeList();
-            if (healthNodeList.isEmpty()) {
-                return;
-            }
-            healthNodeList.forEach(address -> {
-
-            });
-
-            DiscoveryNodeManager.getHealthNodeList().forEach(
-                    address -> executor.execute(() -> {
-                        String url = "http://" + address + "/cd/node/exchange/info";
-                        String s;
-                        Map<String, Integer> exchangeInfo = DiscoveryNodeManager.getExchangeInfo();
-                        try {
-                            s = HttpClientUtil.doPost(url, JSONObject.toJSONString(exchangeInfo));
-                        } catch (Exception e) {
-                            logger.error("node connection failed...");
-                            throw new RuntimeException(e);
-                        }
-                        Result<Map<String, Integer>> result = JSONObject.parseObject(s, Result.class);
-                        Map<String, Integer> data = result.getData();
-                        data.remove(host);
-                        DiscoveryNodeManager.acceptExchangeInfo(data);
-                    })
-            );
-            scheduledExecutor.schedule(new ExchangeInfo(), 30, TimeUnit.SECONDS);
-        }
+    public static String getNodeExchangeUrl(String node) {
+        return "http://" + node + "/cd/node/exchange/info";
     }
-
 
 }

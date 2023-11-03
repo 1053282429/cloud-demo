@@ -21,7 +21,7 @@ public class DiscoveryNodeServiceImpl implements DiscoveryNodeService {
     public Map<String, Integer> exchangeInfo(Map<String, Integer> exchangeInfo) {
         DiscoveryNodeManager.acceptExchangeInfo(exchangeInfo);
         Map<String, Integer> info = DiscoveryNodeManager.getExchangeInfo();
-        info.put(host, 1);
+        info.put(host, DiscoveryNodeManager.NODE_HEALTHY);
         return info;
     }
 
